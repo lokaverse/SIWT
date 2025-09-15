@@ -1,200 +1,154 @@
-# SIWT Examples
+## Quick start guide with copyable deployment code
 
-This directory contains practical examples demonstrating how to integrate SIWT (Sign In With Telegram) into your Internet Computer applications.
+### Backend Deployment
 
-## 📁 Examples Overview
+```bash
+# Install dependencies and build
+npm install
 
-### 🌐 Modern Web Integration
-- **[nextjs-15/](./nextjs-15/)** - Next.js 15 with App Router and JavaScript
-- **[react-19-vite/](./react-19-vite/)** - React 19 with Vite and modern hooks
-- **[sveltekit/](./sveltekit/)** - SvelteKit with server-side rendering
-- **[astro/](./astro/)** - Astro with islands architecture
+# Deploy to local replica for development
+dfx start --background
+dfx deploy backend
 
-### 🖥️ Backend Integration (Standards)
-- **[nodejs-javascript/](./nodejs-javascript/)** - Node.js with modern JavaScript and Zod validation
-- **[nextjs-api-routes/](./nextjs-api-routes/)** - Next.js API routes with edge runtime
-- **[rust-axum/](./rust-axum/)** - Modern async Rust backend
-- **[python-fastapi/](./python-fastapi/)** - FastAPI with Pydantic v2
+# Deploy to IC mainnet
+dfx deploy --network ic backend
 
-### 📱 Advanced Examples
-- **[telegram-mini-apps/](./telegram-mini-apps/)** - WebApp integration with initData validation
-- **[telegram-bot/](./telegram-bot/)** - Telegram bot with SIWT authentication
-- **[internet-identity-dual/](./internet-identity-dual/)** - Dual authentication with II + Telegram
-- **[mobile-pwa/](./mobile-pwa/)** - Progressive Web App with offline capabilities
-- **[multi-canister-2025/](./multi-canister-2025/)** - Scalable IC architecture with delegation chains
+# Get canister ID and interface
+dfx canister id backend --network ic
+dfx generate backend  # Generate TypeScript declarations
 
-## 🚀 Quick Start
+# IMPORTANT: Set up authorization (required for all SIWT methods)
+# Replace YOUR_PRINCIPAL with your actual principal ID
+dfx canister call backend init '(record {
+  authorized = vec { principal "YOUR_PRINCIPAL" };
+  expiration = 28800000000000; // 8 hours in nanoseconds
+})'
 
-Each example includes:
-- **README.md** - Setup and usage instructions
-- **JavaScript source** - Modern ES6+ implementation with JSDoc types
-- **Environment config** - Secure setup with validation
-- **Test suites** - Vitest/Jest testing
-- **Docker setup** - Containerized deployment
-
-## 🔧 Prerequisites
-
-Before running any example:
-
-1. **Install dependencies**
-   ```bash
-   # Enable corepack for pnpm
-   corepack enable
-   # Install with pnpm (preferred)
-   pnpm install
-   ```
-
-2. **Start local IC replica**
-   ```bash
-   dfx start --background --clean
-   ```
-
-3. **Deploy SIWT canister**
-   ```bash
-   dfx deploy --network local
-   dfx generate
-   ```
-
-4. **Configure Telegram Bot**
-   - Create a bot with [@BotFather](https://t.me/botfather)
-   - Enable WebApp features if needed
-   - Set up environment variables with validation
-   - Configure webhook for production
-
-## 📖 Example Categories
-
-### Beginner Examples
-- **basic-web/** - Start here for simple integration
-- **vanilla-js/** - Pure JavaScript without frameworks
-
-### Intermediate Examples
-- **react-app/** - Modern React application
-- **node-backend/** - Server-side integration
-
-### Advanced Examples
-- **telegram-bot/** - Full bot implementation
-- **multi-canister/** - Complex application architecture
-
-## 🛠️ Common Patterns
-
-### Modern Authentication Flow with Validation
-```javascript
-import { z } from 'zod';
-import { SIWT } from '@siwt/core';
-
-/**
- * @typedef {Object} TelegramAuthData
- * @property {number} id - Telegram user ID
- * @property {string} first_name - User's first name
- * @property {string} [username] - Optional username
- * @property {string} [photo_url] - Optional profile photo URL
- * @property {number} auth_date - Authentication timestamp
- * @property {string} hash - Telegram auth hash
- */
-
-const TelegramAuthSchema = z.object({
-  id: z.number(),
-  first_name: z.string(),
-  username: z.string().optional(),
-  photo_url: z.string().url().optional(),
-  auth_date: z.number(),
-  hash: z.string()
-});
-
-// 1. Prepare delegation with validation
-const prepared = await siwt.prepare({
-  user: TelegramAuthSchema.parse(telegramData),
-  session: sessionData,
-  canisters: [targetCanisterId],
-  maxTimeToLive: BigInt(8 * 60 * 60 * 1000 * 1000 * 1000) // 8 hours
-});
-
-// 2. Login with secure hash verification
-const login = await siwt.login({
-  hash: prepared.hash,
-  validateInitData: true
-});
-
-// 3. Get signed delegation with proper expiration
-const delegation = await siwt.delegation({
-  user: telegramUserId,
-  session: sessionData,
-  expiration: login.expiration,
-  canisters: [targetCanisterId]
-});
+# Test the deployed canister (must be called by authorized principal)
+dfx canister call backend prepare '(record { 
+  user = "telegram_user_id"; 
+  session = vec { /* session public key bytes */ }; 
+  canisters = vec { principal "rdmx6-jaaaa-aaaah-qcaiq-cai" } 
+})' --identity your-authorized-identity
 ```
 
-### Modern Error Handling with Result Pattern
+### Authorization Setup
+
+⚠️ **Critical**: All SIWT methods require authorization. You must:
+
+1. **Initialize with authorized principals** during deployment
+2. **Use an authorized identity** when calling methods
+3. **Configure your frontend** to use an authorized agent
+
+```bash
+# Get your principal ID
+dfx identity get-principal
+
+# Initialize canister with your principal as authorized
+dfx canister call backend init '(record {
+  authorized = vec { principal "YOUR_PRINCIPAL_HERE" };
+  expiration = 28800000000000;
+})'
+```
+
+## Example Integration
+
 ```javascript
-import { Result } from '@badrap/result';
+// Frontend integration with actual SIWT backend
+import { createActor, canisterId } from './declarations/backend';
+import { HttpAgent } from '@dfinity/agent';
+import { Ed25519KeyIdentity } from '@dfinity/identity';
+import { Principal } from '@dfinity/principal';
 
 /**
- * @typedef {Object} UserData
- * @property {string} id - User identifier
- * @property {string} name - User display name
+ * Complete SIWT authentication flow with proper error handling
+ * @param {string} telegramUserId - Telegram user ID as string
+ * @param {Array<string>} targetCanisters - Target canister IDs for delegation
+ * @param {Identity} authorizedIdentity - Identity that's authorized in the canister
+ * @returns {Promise<Object>} Authentication result with delegation
  */
-
-/**
- * @typedef {Object} AuthError
- * @property {string} code - Error code
- * @property {string} message - Error message
- * @property {Array} [details] - Optional error details
- */
-
-/**
- * Authenticate user with proper error handling
- * @param {unknown} data - Raw authentication data
- * @returns {Promise<Result<UserData, AuthError>>} Authentication result
- */
-const authenticate = async (data) => {
-  try {
-    const validated = TelegramAuthSchema.parse(data);
-    const result = await siwt.authenticate(validated);
-    return Result.ok(result);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return Result.err({ 
-        code: 'INVALID_DATA', 
-        details: error.errors,
-        message: 'Validation failed'
-      });
-    }
-    return Result.err({ 
-      code: 'AUTH_FAILED', 
-      message: error.message 
-    });
+async function authenticateWithSIWT(telegramUserId, targetCanisters = [], authorizedIdentity) {
+  // 1. Generate session identity
+  const sessionIdentity = Ed25519KeyIdentity.generate();
+  const sessionPublicKey = sessionIdentity.getPublicKey().toDer();
+  
+  // 2. Create actor with authorized identity
+  const agent = new HttpAgent({ 
+    host: process.env.NODE_ENV === 'production' ? 'https://ic0.app' : 'http://localhost:4943',
+    identity: authorizedIdentity // REQUIRED: Must be authorized principal
+  });
+  
+  // Fetch root key for local development
+  if (process.env.NODE_ENV !== 'production') {
+    await agent.fetchRootKey();
   }
-};
-```
+  
+  const actor = createActor(canisterId, { agent });
+  
+  try {
+    // 3. Prepare authentication message
+    const prepareResponse = await actor.prepare({
+      user: telegramUserId,
+      session: Array.from(sessionPublicKey),
+      canisters: targetCanisters.map(id => Principal.fromText(id))
+    });
+    
+    // Handle PrepareResponse enum
+    if ('Err' in prepareResponse) {
+      throw new Error(`Prepare failed: ${prepareResponse.Err}`);
+    }
+    
+    const prepared = prepareResponse.Ok;
+    console.log('Prepared message:', prepared.message);
+    console.log('Expiration:', prepared.expired);
+    
+    // 4. Login with the prepared hash
+    const loginResponse = await actor.login({
+      hash: prepared.hash
+    });
+    
+    // Handle LoginResponse enum
+    if ('Err' in loginResponse) {
+      throw new Error(`Login failed: ${loginResponse.Err}`);
+    }
+    
+    const login = loginResponse.Ok;
+    
+    // 5. Get signed delegation (query call - no certificate needed)
+    const delegationResponse = await actor.delegation({
+      user: telegramUserId,
+      session: Array.from(sessionPublicKey),
+      expiration: login.expiration,
+      canisters: Array.from(login.canisters) // Convert Set to Array
+    });
+    
+    // Handle SignedDelegationResponse enum
+    if ('Err' in delegationResponse) {
+      throw new Error(`Delegation failed: ${delegationResponse.Err}`);
+    }
+    
+    return {
+      sessionIdentity,
+      delegation: delegationResponse.Ok,
+      expiration: login.expiration,
+      canisters: Array.from(login.canisters)
+    };
+    
+  } catch (error) {
+    console.error('SIWT Authentication failed:', error);
+    throw error;
+  }
+}
 
-## 🔒 Security Notes
+// Usage example with proper authorization
+import { Ed25519KeyIdentity } from '@dfinity/identity';
 
-⚠️ **Important**: SIWT lacks a message signing step for Telegram ID ownership verification. This makes it less secure than SIWB (Sign In With Bitcoin). Users should be aware that Telegram ID ownership cannot be cryptographically verified.
+// Load or create an authorized identity
+const authorizedIdentity = Ed25519KeyIdentity.fromSecretKey(/* your authorized key */);
 
-### Best Practices
-- Always validate user sessions
-- Use HTTPS in production
-- Set appropriate delegation expiration times
-- Implement proper error handling
-- Never expose sensitive tokens client-side
-
-## 🤝 Contributing
-
-Want to add an example? Please:
-
-1. Create a new directory with a descriptive name
-2. Include a comprehensive README.md
-3. Add proper error handling and comments
-4. Test thoroughly before submitting
-5. Follow the existing code style
-
-## 📞 Support
-
-If you have questions about any example:
-
-- Check the example's README.md
-- Review the [main documentation](../docs/)
-- Open an issue with the `question` label
-- Join our community discussions
-
----
+const authResult = await authenticateWithSIWT(
+  '123456789', 
+  ['rdmx6-jaaaa-aaaah-qcaiq-cai'], 
+  authorizedIdentity
+);
+console.log('Authentication successful:', authResult);
