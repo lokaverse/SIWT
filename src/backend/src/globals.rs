@@ -8,7 +8,7 @@ pub(crate) struct Global {
     value: ByteBuf,
 }
 
-pub(crate) struct Globals(StableBTreeMap<Hash, Global, VM>);
+pub struct Globals(StableBTreeMap<Hash, Global, VM>);
 
 impl Global {
     pub fn hash(&self) -> Hash {

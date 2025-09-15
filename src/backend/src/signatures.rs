@@ -32,7 +32,7 @@ impl PartialOrd for SigExpiration {
 }
 
 #[derive(Default)]
-pub(crate) struct Signatures {
+pub struct Signatures {
     certified: RbTree<Hash, RbTree<Hash, Unit>>,
     expiration: BinaryHeap<SigExpiration>,
 }
