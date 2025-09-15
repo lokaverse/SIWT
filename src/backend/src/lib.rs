@@ -1,3 +1,31 @@
+//! # SIWT (Sign In With Telegram) Backend Canister
+//!
+//! This canister provides authentication and identity management services for Telegram users
+//! on the Internet Computer. It enables secure delegation-based authentication without
+//! requiring users to manage private keys directly.
+//!
+//! ## Security Considerations
+//!
+//! **Important**: This implementation lacks a message signing step for Telegram ID ownership
+//! verification, which makes it less secure than SIWB (Sign In With Bitcoin). Users should
+//! be aware that Telegram ID ownership cannot be cryptographically verified.
+//!
+//! ## Features
+//!
+//! - User authentication via Telegram integration
+//! - Delegation-based identity management
+//! - Account derivation for various blockchain networks
+//! - Global state management for application data
+//! - Configurable expiration settings
+//!
+//! ## API Overview
+//!
+//! The canister exposes both query and update methods for:
+//! - Authentication and delegation
+//! - Account management
+//! - Global state operations
+//! - Configuration management
+
 use ic_cdk::{init, query, update};
 use types::*;
 
@@ -5,21 +33,44 @@ mod accounts;
 mod canisters;
 mod delegation;
 mod globals;
-mod hash;
 mod messages;
-mod middlewares;
 mod payloads;
 mod responses;
 mod services;
 mod setting;
 mod signatures;
 mod state;
-mod states;
 mod timestamp;
 mod types;
-mod utils;
 
-fn authorized() -> Result<(), String> {
+pub mod hash;
+pub mod states;
+pub mod utils;
+
+pub use crate::accounts::Accounts;
+pub use crate::delegation::Delegation;
+pub use crate::globals::Globals;
+pub use crate::messages::{Message, Messages};
+pub use crate::setting::Setting;
+pub use crate::signatures::Signatures;
+pub use crate::state::{State, LABEL_ASSETS, LABEL_SIG};
+pub use crate::timestamp::Timestamp;
+
+/// Checks if the current caller is authorized to access protected endpoints.
+///
+/// This function verifies that the caller's principal is included in the
+/// authorized principals list stored in the canister's settings.
+///
+/// # Returns
+///
+/// * `Ok(())` - If the caller is authorized
+/// * `Err(String)` - If the caller is not authorized, with error message "Unauthorized"
+///
+/// # Security Note
+///
+/// This is a critical security function that gates access to sensitive operations.
+/// Only principals explicitly added to the authorized list can access protected endpoints.
+pub fn authorized() -> Result<(), String> {
     if states::setting::get().authorized(&caller_principal()) {
         return Ok(());
     }
@@ -27,36 +78,108 @@ fn authorized() -> Result<(), String> {
     Err("Unauthorized".to_owned())
 }
 
+/// Initializes the canister with the provided settings.
+///
+/// This function is called once when the canister is first deployed.
+/// It merges the provided settings with any existing configuration.
+///
+/// # Arguments
+///
+/// * `setting` - The initial configuration settings for the canister
+///
+/// # Note
+///
+/// This function can only be called during canister initialization.
 #[init]
-async fn init(setting: Setting) {
+pub async fn init(setting: Setting) {
     setting.merge();
 }
 
+/// Returns a map of available features and their enabled status.
+///
+/// This query method allows clients to discover which optional features
+/// are compiled into this canister instance.
+///
+/// # Returns
+///
+/// A map where keys are feature names and values indicate if the feature is enabled:
+/// * `"ckbtc"` - Whether ckBTC integration is available
+///
+/// # Example Response
+///
+/// ```json
+/// {
+///   "ckbtc": true
+/// }
+/// ```
 #[query]
-async fn features() -> Map<&'static str, bool> {
+pub async fn features() -> Map<&'static str, bool> {
     let mut features = Map::new();
 
     features.insert("ckbtc", cfg!(feature = "ckbtc"));
     features
 }
 
+/// Retrieves the current canister settings.
+///
+/// This query method returns the complete configuration settings for the canister,
+/// including authorized principals, expiration settings, and other configuration data.
+///
+/// # Authorization
+///
+/// This endpoint requires authorization. Only principals in the authorized list can access it.
+///
+/// # Returns
+///
+/// The current `Setting` configuration object containing all canister settings.
 #[query(name = "setting", guard = "authorized")]
-async fn setting() -> Setting {
+pub async fn setting() -> Setting {
     states::setting::get()
 }
 
+/// Extends the current canister settings with additional configuration.
+///
+/// This update method allows authorized callers to modify the canister's settings
+/// by extending the current configuration with new values.
+///
+/// # Arguments
+///
+/// * `payload` - A `SettingExtendsPayload` containing the settings to merge
+///
+/// # Authorization
+///
+/// This endpoint requires authorization. Only principals in the authorized list can modify settings.
+///
+/// # Behavior
+///
+/// The provided settings are merged with existing settings, with new values
+/// taking precedence over existing ones.
 #[update(name = "extends", guard = "authorized")]
-async fn extends(payload: payloads::SettingExtendsPayload) {
+pub async fn extends(payload: payloads::SettingExtendsPayload) {
     let mut setting = states::setting::get();
-
     setting.extends(payload.authorities, payload.canisters);
     setting.store();
 }
 
+/// Sets the expiration time in minutes for delegations.
+///
+/// This update method configures how long delegations remain valid before expiring.
+///
+/// # Arguments
+///
+/// * `minute` - The expiration time in minutes for new delegations
+///
+/// # Authorization
+///
+/// This endpoint requires authorization. Only principals in the authorized list can modify settings.
+///
+/// # Security Note
+///
+/// Shorter expiration times improve security by limiting the window of potential misuse,
+/// but may require more frequent re-authentication.
 #[update(name = "setExpirationMinute", guard = "authorized")]
-async fn set_expiration_minute(minute: u64) {
+pub async fn set_expiration_minute(minute: u64) {
     let mut setting = states::setting::get();
-
     setting.set_expiration_minute(minute);
     setting.store();
 }

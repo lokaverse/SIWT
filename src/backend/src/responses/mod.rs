@@ -1,6 +1,5 @@
 mod account;
 mod auth;
-mod middleware;
 
 pub(crate) use auth::{
     Delegated, Login, LoginResponse, PrepareResponse, Prepared, SignedDelegation,
@@ -8,4 +7,3 @@ pub(crate) use auth::{
 };
 
 pub(crate) use account::*;
-pub(crate) use middleware::*;

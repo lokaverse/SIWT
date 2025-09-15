@@ -1,56 +1,185 @@
-# `siwt`
+# SIWT - Sign In With Telegram for Internet Computer
 
-Welcome to your new `siwt` project and to the Internet Computer development community. By default, creating a new project adds this README and some template files to your project directory. You can edit these template files to customize your project and to include your own code to speed up the development cycle.
+🚀 **Enable seamless Telegram authentication for Internet Computer applications**
 
-To get started, you might want to explore the project directory structure and the default configuration file. Working with this project in your development environment will not affect any production deployment or identity tokens.
+SIWT provides a secure, easy-to-integrate solution for authenticating users with their Telegram accounts in Internet Computer (ICP) decentralized applications.
 
-To learn more before you start working with `siwt`, see the following documentation available online:
+## ✨ Features
 
-- [Quick Start](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
+- **🔐 Secure Authentication**: Leverage Telegram's robust authentication system
+- **⚡ Easy Integration**: Simple API for quick implementation
+- **🌐 ICP Native**: Built specifically for Internet Computer canisters
+- **🛡️ Privacy-First**: Minimal data collection, maximum security
+- **📱 Cross-Platform**: Works on web, mobile, and desktop applications
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- [DFX](https://internetcomputer.org/docs/current/developer-docs/setup/install/) (Internet Computer SDK)
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [Rust](https://rustup.rs/) (latest stable)
+- Telegram Bot Token (from [@BotFather](https://t.me/botfather))
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/lokaverse/SIWT.git
+   cd siwt
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your Telegram bot token
+   ```
+
+4. **Deploy to local replica**
+   ```bash
+   # Start the replica in background
+   dfx start --background
+   
+   # Deploy canisters and generate interfaces
+   dfx deploy
+   dfx generate
+   ```
+
+5. **Run demo**
+   ```bash
+   node test.js
+   ```
+   
+   This starts a development server at `http://localhost:8080`, proxying API requests to the replica at port 4943.
+
+### Example Integration
+
+```javascript
+import { SIWTClient } from '@your-org/siwt';
+
+// Initialize SIWT client
+const siwt = new SIWTClient({
+  canisterId: 'canister-id',
+  host: 'https://ic0.app'
+});
+
+// Authenticate user
+async function authenticateWithTelegram() {
+  try {
+    const result = await siwt.authenticate({
+      botUsername: 'your_bot_username',
+      requestAccess: 'write'
+    });
+    
+    console.log('User authenticated:', result.user);
+    console.log('Session token:', result.token);
+  } catch (error) {
+    console.error('Authentication failed:', error);
+  }
+}
+
+// Use in an app
+document.getElementById('telegram-login').addEventListener('click', authenticateWithTelegram);
+```
+
+## 📖 Documentation
+
+For comprehensive guides and API references, visit our [documentation folder](./docs/):
+
+- [📋 Implementation Guide](./docs/SIWT_IMPLEMENTATION.md) - Detailed technical implementation
+- [🏗️ Architecture Overview](./docs/) - System design and flow diagrams
+- [🔒 Security Considerations](./docs/) - Security best practices and limitations
+- [⚙️ Configuration Guide](./docs/) - Setup and configuration options
+
+## 🔗 Internet Computer Resources
+
+- [ICP Developer Documentation](https://internetcomputer.org/docs/current/developer-docs/)
+- [Quick Start Guide](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
 - [SDK Developer Tools](https://internetcomputer.org/docs/current/developer-docs/setup/install)
 - [Rust Canister Development Guide](https://internetcomputer.org/docs/current/developer-docs/backend/rust/)
-- [ic-cdk](https://docs.rs/ic-cdk)
-- [ic-cdk-macros](https://docs.rs/ic-cdk-macros)
+- [ic-cdk](https://docs.rs/ic-cdk) - Rust CDK for Internet Computer
+- [ic-cdk-macros](https://docs.rs/ic-cdk-macros) - Macros for Rust CDK
 - [Candid Introduction](https://internetcomputer.org/docs/current/developer-docs/backend/candid/)
+- [Internet Computer Forum](https://forum.dfinity.org/)
 
-If you want to start working on your project right away, you might want to try the following commands:
+## 🛠️ Development
 
-```bash
-cd siwt/
-dfx help
-dfx canister --help
-```
-
-## Running the project locally
-
-If you want to test your project locally, you can use the following commands:
+### Local Development
 
 ```bash
-# Starts the replica, running in the background
+# Start local replica
 dfx start --background
 
-# Deploys your canisters to the replica and generates your candid interface
+# Deploy canisters
 dfx deploy
+
+# Generate candid interfaces
 dfx generate
-```
 
-at any time. This is recommended before starting the frontend development server, and will be run automatically any time you run `dfx deploy`.
+# Run tests
+cargo test
 
-If you are making frontend changes, you can start a development server with
-
-```bash
+# Start development server
 node test.js
 ```
 
-Which will start a server at `http://localhost:8080`, proxying API requests to the replica at port 4943.
+### Environment Variables
 
-### Note on frontend environment variables
+If hosting frontend code without DFX, configure environment variables:
 
-If you are hosting frontend code somewhere without using DFX, you may need to make one of the following adjustments to ensure your project does not fetch the root key in production:
+- Set `DFX_NETWORK` to `ic` for production
+- Replace `process.env.DFX_NETWORK` in autogenerated declarations
+- Use `canisters -> {asset_canister_id} -> declarations -> env_override` in `dfx.json`
+- Write custom `createActor` constructor if needed
 
-- set`DFX_NETWORK` to `ic` if you are using Webpack
-- use your own preferred method to replace `process.env.DFX_NETWORK` in the autogenerated declarations
-  - Setting `canisters -> {asset_canister_id} -> declarations -> env_override to a string` in `dfx.json` will replace `process.env.DFX_NETWORK` with the string in the autogenerated declarations
-- Write your own `createActor` constructor
+## 🤝 Contributing
 
-Client usage at `test.js`:
+We welcome contributions! Here's how to get started:
+
+### Development Setup
+
+1. **Fork the repository**
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/amazing-feature
+   ```
+3. **Make changes and add tests**
+4. **Ensure all tests pass**
+   ```bash
+   cargo test && npm test
+   ```
+5. **Commit changes**
+   ```bash
+   git commit -m 'Add amazing feature'
+   ```
+6. **Push to the branch**
+   ```bash
+   git push origin feature/amazing-feature
+   ```
+7. **Open a Pull Request**
+
+### Code Standards
+
+- Follow Rust best practices and use `cargo fmt`
+- Write comprehensive tests for new features
+- Update documentation for API changes
+- Ensure security considerations are addressed
+
+### Reporting Issues
+
+Found a bug or have a feature request? Please [open an issue] with:
+
+- **Clear description** of the problem or feature
+- **Steps to reproduce** (for bugs)
+- **Expected vs actual behavior**
+- **Environment details** (OS, browser, DFX version, etc.)
+- **Logs or error messages** (if applicable)
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.

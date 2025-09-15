@@ -8,7 +8,7 @@ pub const LABEL_SIG: &[u8] = b"sig";
 
 pub(crate) type AssetHashes = RbTree<&'static str, Hash>;
 
-pub(crate) struct State {
+pub struct State {
     signatures: RefCell<Signatures>,
     assets: RefCell<AssetHashes>,
 }

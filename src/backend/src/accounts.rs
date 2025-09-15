@@ -1,6 +1,6 @@
 use crate::types::*;
 
-pub(crate) struct Accounts {
+pub struct Accounts {
     users: StableBTreeMap<Principal, Hash, VM>,
     principals: StableBTreeMap<Hash, Principal, VM>,
     seeds: StableBTreeMap<Hash, String, VM>,

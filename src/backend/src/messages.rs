@@ -1,7 +1,7 @@
 use crate::types::*;
 
 #[derive(CandidType, Clone, Deserialize, Serialize)]
-pub(crate) struct Message {
+pub struct Message {
     user: String,
     session: ByteBuf,
     expiration: u64,

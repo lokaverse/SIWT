@@ -13,7 +13,6 @@ thread_local! {
         allocate(2),
         allocate(3),
     ]);
-    static MIDDLEWARES: MiddlewaresStateType = Middlewares::init();
     static GLOBALS: RefCell<Globals> = Globals::init(allocate(4));
 }
 
@@ -62,18 +61,6 @@ pub(crate) mod messages {
 
     pub fn borrow_mut<F: FnOnce(&mut Messages) -> R, R>(f: F) -> R {
         MESSAGES.with_borrow_mut(f)
-    }
-}
-
-pub(crate) mod middlewares {
-    use super::*;
-
-    pub fn borrow<F: FnOnce(&Middlewares) -> R, R>(f: F) -> R {
-        MIDDLEWARES.with_borrow(f)
-    }
-
-    pub fn borrow_mut<F: FnOnce(&mut Middlewares) -> R, R>(f: F) -> R {
-        MIDDLEWARES.with_borrow_mut(f)
     }
 }
 
