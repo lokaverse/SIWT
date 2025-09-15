@@ -1,7 +1,7 @@
 use crate::responses::{Delegated, SignedDelegation};
 use crate::types::{
     fork, hash, labeled, labeled_hash, utils, Accounts, AsHashTree, ByteBuf, CandidType, Hash,
-    HashMap, HashTree, Middleware, Middlewares, Principal, Serialize, Set, State, Timestamp,
+    HashMap, HashTree, Principal, Serialize, Set, State, Timestamp,
     LABEL_ASSETS, LABEL_SIG,
 };
 
@@ -111,22 +111,6 @@ impl Delegation {
         })
     }
 
-    pub(crate) fn store_with_middleware(&self, middleware: &[u8]) -> Hash {
-        let middleware = self.clone().set_session(middleware);
-
-        State::with(|state| {
-            let signatures = &mut *state.signatures().borrow_mut();
-            let [session, _] = signatures.puts(self.seed_hash(), [self.hash(), middleware.hash()]);
-
-            state.update_root_hash(&signatures);
-
-            Accounts::borrow_mut(|a| a.store(self.user(), &self.principal()));
-            Middlewares::put(middleware.session_hash(), middleware);
-
-            session
-        })
-    }
-
     pub(crate) fn sign(&self, certificate: impl Into<ByteBuf>) -> Result<SignedDelegation, String> {
         let certificate = certificate.into();
         let hash = self.hash();
@@ -187,21 +171,4 @@ fn serialize_certificate<T: Serialize>(data: &T) -> Result<Vec<u8>, String> {
         .map_err(|e| e.to_string())?;
 
     Ok(cbor_serializer.into_inner())
-}
-
-impl Into<Middleware> for Delegation {
-    fn into(self) -> Middleware {
-        (&self).into()
-    }
-}
-
-impl Into<Middleware> for &Delegation {
-    fn into(self) -> Middleware {
-        Middleware::new(
-            self.pubkey(),
-            self.session(),
-            self.expiration(),
-            self.targets().copied(),
-        )
-    }
 }
