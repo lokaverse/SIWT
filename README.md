@@ -2,7 +2,13 @@
 
 🚀 **Enable seamless Telegram authentication for Internet Computer applications**
 
-> **⚠️ Demo Project Notice**: This is a demonstration implementation of SIWT. For production use, please refer to the [Pupsodin Bot](https://pupsbot.com/) ([Telegram: @pupsodinbot](https://t.me/pupsodinbot)) which provides a fully tested and production-ready SIWT implementation.
+## Background 
+
+This project comes from the dev team behind [Pupsodin Bot](https://pupsbot.com/) ([Telegram: @pupsodinbot](https://t.me/pupsodinbot)), a Telegram interface for memecoin trading on [odin.fun](https://odin.fun). While building Pupsodin Bot, we developed a robust SIWT (Sign In With Telegram) authentication system for seamless user onboarding.
+
+Recognizing that many developers in the IC ecosystem face the same challenge of integrating Telegram authentication with Internet Computer applications, we decided to open-source our SIWT implementation so everyone can use this without reinventing the wheel.
+
+**See it in action**: To experience SIWT in a production environment, check out [@pupsodinbot](https://t.me/pupsodinbot) where thousands of users authenticate daily for memecoin trading.
 
 SIWT provides a secure, easy-to-integrate solution for authenticating users with their Telegram accounts in Internet Computer (ICP) decentralized applications.
 
