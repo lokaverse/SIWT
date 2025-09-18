@@ -1,0 +1,90 @@
+type AccountCkBtcPayload = record { owners : vec principal };
+type AccountDerivedAddress = record {
+  btc : AccountDerivedBtcAddress;
+  "principal" : principal;
+  pubkey : blob;
+};
+type AccountDerivedAddressPayload = record {
+  ckbtc : AccountCkBtcPayload;
+  user : text;
+};
+type AccountDerivedAddressResponse = variant {
+  Ok : AccountDerivedAddress;
+  Err : text;
+};
+type AccountDerivedBtcAddress = record {
+  accounts : vec record { principal; opt text };
+  address : text;
+};
+type Delegated = record {
+  pubkey : blob;
+  targets : vec principal;
+  expiration : nat64;
+};
+type DelegationPayload = record {
+  user : text;
+  expiration : nat64;
+  session : blob;
+  canisters : vec principal;
+};
+type Login = record {
+  expired : text;
+  hash : blob;
+  expiration : nat64;
+  canisters : vec principal;
+};
+type LoginPayload = record { hash : blob };
+type LoginResponse = variant { Ok : Login; Err : text };
+type PreparePayload = record {
+  user : text;
+  session : blob;
+  canisters : vec principal;
+};
+type PrepareResponse = variant { Ok : Prepared; Err : text };
+type Prepared = record {
+  expired : text;
+  hash : blob;
+  expiration : nat64;
+  message : text;
+};
+type Setting = record {
+  expiration_minute : nat64;
+  canisters : vec principal;
+  authorities : vec principal;
+};
+type SettingExtendsPayload = record {
+  canisters : vec principal;
+  authorities : vec principal;
+};
+type SignedDelegation = record {
+  signature : blob;
+  delegation : Delegated;
+  pubkey : blob;
+};
+type SignedDelegationResponse = variant { Ok : SignedDelegation; Err : text };
+service : (Setting) -> {
+  accountDerivedAddress : (AccountDerivedAddressPayload) -> (
+      AccountDerivedAddressResponse,
+    );
+  all : () -> (vec record { text; principal }) query;
+  caller : () -> (principal, opt text) query;
+  delegation : (DelegationPayload) -> (SignedDelegationResponse) query;
+  extends : (SettingExtendsPayload) -> ();
+  features : () -> (vec record { text; bool }) query;
+  globals : () -> (vec record { text; blob }) query;
+  globalsContains : (vec text) -> (bool) query;
+  globalsGet : (text) -> (opt blob) query;
+  globalsHas : (text) -> (bool) query;
+  globalsIn : (vec text) -> (vec record { text; blob }) query;
+  globalsKeys : () -> (vec text) query;
+  globalsRemove : (text) -> (opt blob);
+  globalsRemoves : (vec text) -> (vec record { text; blob });
+  globalsStore : (text, blob) -> ();
+  globalsStores : (vec record { text; blob }) -> (vec record { text; blob });
+  login : (LoginPayload) -> (LoginResponse);
+  prepare : (PreparePayload) -> (PrepareResponse);
+  "principal" : (text) -> (opt principal) query;
+  setExpirationMinute : (nat64) -> ();
+  setting : () -> (Setting) query;
+  user : (principal) -> (opt text) query;
+}

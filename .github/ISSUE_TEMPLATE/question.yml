@@ -1,0 +1,102 @@
+name: Question / Support
+description: Ask a question or get support for SIWT
+title: "[Question]: "
+labels: ["question", "support"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out! Please provide as much detail as possible so we can help you effectively.
+        
+        **Before submitting:** Please check our [documentation](../docs/) and [existing issues](../../issues) to see if your question has already been answered.
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - General usage question
+        - Integration help
+        - Configuration issue
+        - Best practices
+        - Performance question
+        - Security question
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Please describe your question in detail...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context about what you're trying to achieve
+      placeholder: |
+        - What are you building?
+        - What have you tried so far?
+        - What specific outcome are you looking for?
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant Code
+      description: If applicable, please share relevant code snippets
+      placeholder: |
+        ```javascript
+        // Your code here
+        ```
+      render: javascript
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment (if relevant)
+      description: Please provide details about your environment
+      placeholder: |
+        - OS: [e.g., macOS 13.0, Ubuntu 20.04, Windows 11]
+        - DFX Version: [e.g., 0.14.1]
+        - Node.js Version: [e.g., 18.12.0]
+        - SIWT Version: [e.g., v1.0.0]
+
+  - type: textarea
+    id: research
+    attributes:
+      label: What have you tried?
+      description: What research or attempts have you made to solve this?
+      placeholder: |
+        - Checked documentation: [Yes/No]
+        - Searched existing issues: [Yes/No]
+        - Tried: [describe what you've attempted]
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      description: How urgent is this question?
+      options:
+        - Low - Just curious
+        - Medium - Blocking my development
+        - High - Blocking production deployment
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
