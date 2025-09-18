@@ -1,5 +1,7 @@
 # SIWT - Sign In With Telegram for Internet Computer
 
+![SIWT Header](.github/assets/SIWT%20header.png)
+
 🚀 **Enable seamless Telegram authentication for Internet Computer applications**
 
 ## Background 
